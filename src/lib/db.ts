@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -22,7 +22,7 @@ export const dbUtils = {
   },
 
   // Update a setting
-  async updateSetting(key: string, value: unknown) {
+  async updateSetting(key: string, value: Prisma.InputJsonValue) {
     return await db.settings.upsert({
       where: { key },
       update: { value },
@@ -67,7 +67,7 @@ export const dbUtils = {
     entityType: string,
     entityId: string,
     eventType: string,
-    eventData: Record<string, unknown>,
+    eventData: Prisma.InputJsonValue,
     userId?: string,
     ipAddress?: string
   ) {

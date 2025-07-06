@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, TimelineType, ServiceType, QuoteStatus, AgreementStatus, UserRole } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -52,7 +52,7 @@ async function main() {
     create: {
       email: 'admin@samedayramps.com',
       name: 'Admin User',
-      role: 'ADMIN',
+      role: UserRole.ADMIN,
     },
   });
 
@@ -127,12 +127,12 @@ async function main() {
       customerId: createdCustomers[0].id,
       serviceAddressId: createdAddresses[0].id,
       rampHeight: 24,
-      timelineNeeded: 'ASAP',
-      serviceType: 'POST_SURGERY',
+      timelineNeeded: TimelineType.ASAP,
+      serviceType: ServiceType.POST_SURGERY,
       monthlyRate: 269, // 125 + (24 * 6)
       installationFee: 123, // 75 + (24 * 2)
       estimatedDuration: '2-3 hours',
-      status: 'PENDING',
+      status: QuoteStatus.PENDING,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
       notes: 'Customer needs ramp for post-surgery recovery',
     },
@@ -140,12 +140,12 @@ async function main() {
       customerId: createdCustomers[1].id,
       serviceAddressId: createdAddresses[1].id,
       rampHeight: 18,
-      timelineNeeded: 'WITHIN_3_DAYS',
-      serviceType: 'AGING_IN_PLACE',
+      timelineNeeded: TimelineType.WITHIN_3_DAYS,
+      serviceType: ServiceType.AGING_IN_PLACE,
       monthlyRate: 233, // 125 + (18 * 6)
       installationFee: 111, // 75 + (18 * 2)
       estimatedDuration: '1-2 hours',
-      status: 'SENT',
+      status: QuoteStatus.SENT,
       expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000), // 5 days from now
       sentAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
       notes: 'Customer wants to age in place comfortably',
@@ -154,12 +154,12 @@ async function main() {
       customerId: createdCustomers[2].id,
       serviceAddressId: createdAddresses[2].id,
       rampHeight: 12,
-      timelineNeeded: 'WITHIN_1_WEEK',
-      serviceType: 'TRANSITIONAL_HOSPICE',
+      timelineNeeded: TimelineType.WITHIN_1_WEEK,
+      serviceType: ServiceType.TRANSITIONAL_HOSPICE,
       monthlyRate: 197, // 125 + (12 * 6)
       installationFee: 99, // 75 + (12 * 2)
       estimatedDuration: '1 hour',
-      status: 'ACCEPTED',
+      status: QuoteStatus.ACCEPTED,
       expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
       sentAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
       notes: 'Hospice care transition support',
@@ -181,7 +181,7 @@ async function main() {
     await prisma.agreement.create({
       data: {
         quoteId: acceptedQuote.id,
-        status: 'SIGNED',
+        status: AgreementStatus.SIGNED,
         signedAt: new Date(),
         contractTerms: {
           monthlyRate: acceptedQuote.monthlyRate,

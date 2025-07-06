@@ -165,7 +165,7 @@ export default function Dashboard() {
   }
 
   if (error) {
-    return (
+  return (
       <DesktopLayout title="Dashboard">
         <ErrorState 
           type="server"
@@ -322,7 +322,7 @@ export default function Dashboard() {
               variant="outline" 
               className="h-14 flex-col space-y-1"
               onClick={() => handleQuickAction("Schedule Installation")}
-            >
+        >
               <Calendar className="h-6 w-6" />
               <span>Schedule Install</span>
             </Button>
@@ -338,7 +338,7 @@ export default function Dashboard() {
         </section>
         </div>
         </div>
-      </div>
+    </div>
     </DesktopLayout>
   );
 }
