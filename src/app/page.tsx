@@ -1,103 +1,344 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
+import { DesktopLayout } from "@/components/desktop-layout";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { LoadingState } from "@/components/loading-state";
+import { ErrorState } from "@/components/error-state";
+import { toast } from "@/components/mobile-toast";
+import { useMockData } from "@/hooks/use-async";
+import { 
+  AlertCircle, 
+  Calendar, 
+  DollarSign, 
+  Users, 
+  Phone, 
+  MapPin, 
+  Clock,
+  TrendingUp
+} from "lucide-react";
+import Link from "next/link";
+
+// Type definitions
+interface UrgentAction {
+  id: number;
+  type: string;
+  title: string;
+  subtitle: string;
+  action: string;
+  variant: "destructive" | "outline";
+}
+
+interface Metric {
+  id: number;
+  label: string;
+  value: string;
+  change: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+}
+
+interface Appointment {
+  id: number;
+  customer: string;
+  address: string;
+  time: string;
+  status: string;
+  color: string;
+}
+
+interface DashboardData {
+  urgentActions: UrgentAction[];
+  metrics: Metric[];
+  schedule: Appointment[];
+}
+
+// Mock data
+const mockDashboardData: DashboardData = {
+  urgentActions: [
+    {
+      id: 1,
+      type: "quotes",
+      title: "3 quotes awaiting response",
+      subtitle: "Average response time: 2.5 hours",
+      action: "View All",
+      variant: "destructive" as const
+    },
+    {
+      id: 2,
+      type: "installations",
+      title: "2 installations scheduled today",
+      subtitle: "Next: Johnson M. at 10:00 AM",
+      action: "Schedule",
+      variant: "outline" as const
+    },
+    {
+      id: 3,
+      type: "payments",
+      title: "1 payment failed - needs attention",
+      subtitle: "Williams S. - $150 monthly rental",
+      action: "Resolve",
+      variant: "outline" as const
+    }
+  ],
+  metrics: [
+    {
+      id: 1,
+      label: "Revenue",
+      value: "$12,450",
+      change: "+12%",
+      icon: DollarSign,
+      color: "green"
+    },
+    {
+      id: 2,
+      label: "Active Rentals",
+      value: "23",
+      change: "+3 this week",
+      icon: Users,
+      color: "blue"
+    },
+    {
+      id: 3,
+      label: "Conversion Rate",
+      value: "78%",
+      change: "+5% vs last month",
+      icon: TrendingUp,
+      color: "purple"
+    },
+    {
+      id: 4,
+      label: "Avg Duration",
+      value: "4mo",
+      change: "Industry avg: 3.2mo",
+      icon: Clock,
+      color: "orange"
+    }
+  ],
+  schedule: [
+    {
+      id: 1,
+      customer: "Johnson, Michael",
+      address: "1234 Oak Street",
+      time: "10:00 AM - Installation",
+      status: "Scheduled",
+      color: "blue"
+    },
+    {
+      id: 2,
+      customer: "Williams, Sarah",
+      address: "567 Pine Avenue",
+      time: "2:00 PM - Removal",
+      status: "Scheduled",
+      color: "green"
+    }
+  ]
+};
+
+export default function Dashboard() {
+  const { data, loading, error, execute } = useMockData(
+    mockDashboardData,
+    1500, // 1.5 second delay
+    false // Set to true to simulate error
+  );
+
+  const handleQuickAction = (actionType: string) => {
+    toast.success(`${actionType} action triggered!`, "This would open the relevant page");
+  };
+
+  const handleRetry = () => {
+    toast.info("Refreshing dashboard...", "Getting the latest data");
+    execute();
+  };
+
+  const handleContactSupport = () => {
+    toast.info("Calling support...", "You would be connected to our support team");
+  };
+
+  if (loading) {
+    return (
+      <DesktopLayout title="Dashboard">
+        <LoadingState type="dashboard" />
+      </DesktopLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DesktopLayout title="Dashboard">
+        <ErrorState 
+          type="server"
+          onRetry={handleRetry}
+          onContactSupport={handleContactSupport}
         />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+      </DesktopLayout>
+    );
+  }
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  if (!data) {
+    return (
+      <DesktopLayout title="Dashboard">
+        <ErrorState type="general" onRetry={handleRetry} />
+      </DesktopLayout>
+    );
+  }
+
+  return (
+    <DesktopLayout title="Dashboard">
+      <div className="p-4 lg:p-8 space-y-6">
+        <div className="lg:grid lg:grid-cols-12 lg:gap-8 lg:space-y-0 space-y-6">
+        {/* Left Column - Main Content */}
+        <div className="lg:col-span-8 space-y-6">
+          {/* Urgent Actions - Always at top */}
+          <section>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2 text-red-500" />
+            Urgent Actions
+          </h2>
+          <div className="space-y-3">
+            {data.urgentActions.map((action: UrgentAction) => (
+              <Card key={action.id} className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium text-red-900 dark:text-red-100">
+                        {action.title}
+                      </p>
+                      <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                        {action.subtitle}
+                      </p>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      variant={action.variant}
+                      onClick={() => handleQuickAction(action.type)}
+                    >
+                      {action.action}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Key Metrics */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Key Metrics (Last 30 Days)
+          </h2>
+          <div className="grid grid-cols-2 gap-4">
+            {data.metrics.map((metric: Metric) => {
+              const Icon = metric.icon;
+              return (
+                <Card key={metric.id}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{metric.label}</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{metric.value}</p>
+                      </div>
+                      <div className={`h-12 w-12 bg-${metric.color}-100 dark:bg-${metric.color}-900/20 rounded-full flex items-center justify-center`}>
+                        <Icon className={`h-6 w-6 text-${metric.color}-600 dark:text-${metric.color}-400`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center mt-2">
+                      {metric.change.includes('+') && (
+                        <TrendingUp className={`h-4 w-4 text-${metric.color}-600 dark:text-${metric.color}-400 mr-1`} />
+                      )}
+                      <span className={`text-sm text-${metric.color === 'green' ? 'green' : 'gray'}-600 dark:text-${metric.color === 'green' ? 'green' : 'gray'}-400`}>
+                        {metric.change}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        {/* Right Column - Sidebar Content */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Today's Schedule */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+            <Calendar className="h-5 w-5 mr-2" />
+            Today&apos;s Schedule
+          </h2>
+          <div className="space-y-3">
+            {data.schedule.map((appointment: Appointment) => (
+              <Card key={appointment.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className={`h-12 w-12 bg-${appointment.color}-100 dark:bg-${appointment.color}-900/20 rounded-full flex items-center justify-center`}>
+                        <MapPin className={`h-6 w-6 text-${appointment.color}-600 dark:text-${appointment.color}-400`} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">{appointment.customer}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{appointment.address}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{appointment.time}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col space-y-2">
+                      <Badge variant="outline">{appointment.status}</Badge>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="min-w-[44px]"
+                        onClick={() => toast.success("Calling customer...", `Dialing ${appointment.customer}`)}
+                      >
+                        <Phone className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        {/* Quick Actions */}
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-2 gap-4">
+            <Link href="/customers/add">
+              <Button className="h-14 flex-col space-y-1 w-full">
+                <Users className="h-6 w-6" />
+                <span>New Customer</span>
+              </Button>
+            </Link>
+            <Link href="/quotes/add">
+              <Button variant="outline" className="h-14 flex-col space-y-1 w-full">
+                <DollarSign className="h-6 w-6" />
+                <span>Create Quote</span>
+              </Button>
+            </Link>
+            <Button 
+              variant="outline" 
+              className="h-14 flex-col space-y-1"
+              onClick={() => handleQuickAction("Schedule Installation")}
+            >
+              <Calendar className="h-6 w-6" />
+              <span>Schedule Install</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-14 flex-col space-y-1"
+              onClick={() => handleQuickAction("Call Customer")}
+            >
+              <Phone className="h-6 w-6" />
+              <span>Call Customer</span>
+            </Button>
+          </div>
+        </section>
+        </div>
+        </div>
+      </div>
+    </DesktopLayout>
   );
 }
