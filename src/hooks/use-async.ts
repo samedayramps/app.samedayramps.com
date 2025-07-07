@@ -35,7 +35,7 @@ export function useAsync<T>(
       setState({ data: null, loading: false, error: errorObj });
       throw errorObj;
     }
-  }, dependencies);
+  }, [asyncFunction, ...dependencies]);
 
   const reset = useCallback(() => {
     setState({ data: null, loading: false, error: null });

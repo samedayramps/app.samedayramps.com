@@ -157,7 +157,7 @@ export function setupNetworkNotifications() {
   });
 }
 
-export default {
+const notifications = {
   success: notifySuccess,
   error: notifyError,
   warning: notifyWarning,
@@ -166,4 +166,6 @@ export default {
   confirm: notifyConfirm,
   business: businessNotifications,
   setupNetwork: setupNetworkNotifications,
-}; 
+};
+
+export default notifications; 

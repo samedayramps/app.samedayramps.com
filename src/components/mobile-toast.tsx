@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -41,6 +41,13 @@ export function MobileToast({ toast, onDismiss }: MobileToastProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
 
+  const handleDismiss = useCallback(() => {
+    setIsExiting(true);
+    setTimeout(() => {
+      onDismiss(toast.id);
+    }, 300);
+  }, [onDismiss, toast.id]);
+
   useEffect(() => {
     // Slide in animation
     setTimeout(() => setIsVisible(true), 50);
@@ -53,14 +60,7 @@ export function MobileToast({ toast, onDismiss }: MobileToastProps) {
 
       return () => clearTimeout(timer);
     }
-  }, [toast.duration]);
-
-  const handleDismiss = () => {
-    setIsExiting(true);
-    setTimeout(() => {
-      onDismiss(toast.id);
-    }, 300);
-  };
+  }, [toast.duration, handleDismiss]);
 
   const getToastConfig = () => {
     switch (toast.type) {

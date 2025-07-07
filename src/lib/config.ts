@@ -159,7 +159,7 @@ export const env = {
   
   // Google Services
   GOOGLE_MAPS_API_KEY: process.env.GOOGLE_MAPS_API_KEY,
-  GOOGLE_PLACES_API_KEY: process.env.GOOGLE_PLACES_API_KEY,
+  GOOGLE_PLACES_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY,
   
   // File Storage
   BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,

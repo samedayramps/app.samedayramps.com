@@ -3,11 +3,12 @@ import { db } from '@/lib/db';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const quote = await db.quote.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         customer: true,
         serviceAddress: true,
@@ -42,8 +43,9 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const data = await request.json();
     const { status, notes, ...updateData } = data;
@@ -58,7 +60,7 @@ export async function PUT(
     }
 
     const quote = await db.quote.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...updateData,
         ...statusUpdates,
@@ -88,12 +90,13 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Check if quote has associated agreements/rentals
     const quote = await db.quote.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         agreement: {
           include: {
@@ -118,7 +121,7 @@ export async function DELETE(
     }
 
     await db.quote.delete({
-      where: { id: params.id }
+      where: { id }
     });
 
     return NextResponse.json({ message: 'Quote deleted successfully' });

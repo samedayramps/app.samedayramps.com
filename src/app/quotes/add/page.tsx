@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PlacesAutocomplete } from "@/components/ui/places-autocomplete";
 import { ArrowLeft, Send, DollarSign, Calculator } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -149,15 +150,17 @@ export default function AddQuotePage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="serviceAddress">Service Address *</Label>
-                <Textarea
+                <PlacesAutocomplete
                   id="serviceAddress"
                   placeholder="Enter the installation address"
                   value={formData.serviceAddress}
-                  onChange={(e) => handleInputChange("serviceAddress", e.target.value)}
-                  className="min-h-[80px] text-base"
-                  rows={3}
+                  onChange={(value) => handleInputChange("serviceAddress", value)}
+                  className="h-12 text-base"
                   required
                 />
+                <p className="text-sm text-gray-500">
+                  Start typing an address and select from the suggestions
+                </p>
               </div>
 
               <div className="space-y-2">

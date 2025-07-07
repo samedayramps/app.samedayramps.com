@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PlacesAutocomplete } from "@/components/ui/places-autocomplete";
 import { ArrowLeft, Save, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -34,6 +35,21 @@ export default function AddCustomerPage() {
     setFormData(prev => ({
       ...prev,
       [field]: value
+    }));
+  };
+
+  const handleAddressSelect = (address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+  }) => {
+    setFormData(prev => ({
+      ...prev,
+      address: address.street,
+      city: address.city,
+      state: address.state,
+      zipCode: address.zipCode
     }));
   };
 
@@ -144,65 +160,33 @@ export default function AddCustomerPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="address">Street Address *</Label>
-                <Input
+                <Label htmlFor="address">Service Address *</Label>
+                <PlacesAutocomplete
                   id="address"
-                  type="text"
-                  placeholder="1234 Main Street"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
+                  placeholder="Enter the service address"
+                  value={`${formData.address}${formData.city ? `, ${formData.city}` : ''}${formData.state ? `, ${formData.state}` : ''}${formData.zipCode ? ` ${formData.zipCode}` : ''}`}
+                  onChange={(value) => handleInputChange("address", value)}
+                  onAddressSelect={handleAddressSelect}
                   className="h-12 text-base"
-                  autoComplete="address-line1"
                   required
                 />
+                <p className="text-sm text-gray-500">
+                  Start typing an address and select from the suggestions
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="city">City *</Label>
-                  <Input
-                    id="city"
-                    type="text"
-                    placeholder="Dallas"
-                    value={formData.city}
-                    onChange={(e) => handleInputChange("city", e.target.value)}
-                    className="h-12 text-base"
-                    autoComplete="address-level2"
-                    required
-                  />
+              {/* Show parsed address components if available */}
+              {(formData.address || formData.city || formData.state || formData.zipCode) && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-sm text-gray-700 mb-2">Parsed Address:</h4>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    {formData.address && <div><strong>Street:</strong> {formData.address}</div>}
+                    {formData.city && <div><strong>City:</strong> {formData.city}</div>}
+                    {formData.state && <div><strong>State:</strong> {formData.state}</div>}
+                    {formData.zipCode && <div><strong>ZIP:</strong> {formData.zipCode}</div>}
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="state">State *</Label>
-                  <Input
-                    id="state"
-                    type="text"
-                    placeholder="TX"
-                    value={formData.state}
-                    onChange={(e) => handleInputChange("state", e.target.value)}
-                    className="h-12 text-base"
-                    autoComplete="address-level1"
-                    maxLength={2}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="zipCode">ZIP Code *</Label>
-                <Input
-                  id="zipCode"
-                  type="text"
-                  placeholder="75201"
-                  value={formData.zipCode}
-                  onChange={(e) => handleInputChange("zipCode", e.target.value)}
-                  className="h-12 text-base"
-                  inputMode="numeric"
-                  autoComplete="postal-code"
-                  pattern="[0-9]{5}"
-                  maxLength={5}
-                  required
-                />
-              </div>
+              )}
             </CardContent>
           </Card>
 

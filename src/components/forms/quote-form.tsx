@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { PlacesAutocomplete } from '@/components/ui/places-autocomplete';
 import { formatCurrency } from '@/lib/status-utils';
 import { typography, spacing, icons, themes, layout, cx } from '@/lib/design-system';
-import { Loader2, Calculator, DollarSign, Home, Clock, User } from 'lucide-react';
+import { Loader2, Calculator, DollarSign, Home, Clock, User, Plus } from 'lucide-react';
 
 interface Customer {
   id: string;
@@ -84,6 +85,8 @@ export function QuoteForm({ customer, onSubmit, onCancel, initialData, isSubmitt
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof QuoteFormData, string>>>({});
+  const [showAddNewAddress, setShowAddNewAddress] = useState(false);
+  const [newAddress, setNewAddress] = useState('');
 
   // Pricing calculation based on ramp height
   const calculatePricing = (height: number) => {
@@ -192,28 +195,73 @@ export function QuoteForm({ customer, onSubmit, onCancel, initialData, isSubmitt
 
             {/* Service Address */}
             <div className={spacing.gap.md}>
-              <div className={cx("flex items-center mb-4", spacing.gap.sm)}>
-                <Home className={cx(icons.sm, "text-gray-500")} />
-                <h3 className={typography.heading.h3}>Service Address</h3>
+              <div className={cx("flex items-center justify-between mb-4")}>
+                <div className={cx("flex items-center", spacing.gap.sm)}>
+                  <Home className={cx(icons.sm, "text-gray-500")} />
+                  <h3 className={typography.heading.h3}>Service Address</h3>
+                </div>
+                {customer?.addresses && customer.addresses.length > 0 && !showAddNewAddress && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAddNewAddress(true)}
+                  >
+                    <Plus className={cx(icons.sm, "mr-1")} />
+                    New Address
+                  </Button>
+                )}
               </div>
               
               <div className={spacing.gap.sm}>
                 <Label htmlFor="serviceAddress">Service Address *</Label>
-                <Select
-                  value={formData.serviceAddressId}
-                  onValueChange={(value) => updateField('serviceAddressId', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select service address" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customer?.addresses.map((address) => (
-                      <SelectItem key={address.id} value={address.id}>
-                        {address.street}, {address.city}, {address.state} {address.zipCode}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                
+                {showAddNewAddress || !customer?.addresses || customer.addresses.length === 0 ? (
+                  <div className={spacing.gap.sm}>
+                    <PlacesAutocomplete
+                      id="newAddress"
+                      placeholder="Enter the service address"
+                      value={newAddress}
+                      onChange={(value) => {
+                        setNewAddress(value);
+                        updateField('serviceAddressId', 'new-address');
+                      }}
+                      className="h-10"
+                      required
+                    />
+                    {customer?.addresses && customer.addresses.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowAddNewAddress(false);
+                          setNewAddress('');
+                          updateField('serviceAddressId', '');
+                        }}
+                      >
+                        Use Existing Address
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <Select
+                    value={formData.serviceAddressId}
+                    onValueChange={(value) => updateField('serviceAddressId', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select service address" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {customer?.addresses.map((address) => (
+                        <SelectItem key={address.id} value={address.id}>
+                          {address.street}, {address.city}, {address.state} {address.zipCode}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                
                 {errors.serviceAddressId && (
                   <p className={cx(typography.body.small, "text-red-500")}>{errors.serviceAddressId}</p>
                 )}

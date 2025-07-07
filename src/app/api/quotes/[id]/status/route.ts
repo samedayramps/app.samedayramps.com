@@ -4,8 +4,9 @@ import { QuoteStatus } from '@prisma/client';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const { status } = await request.json();
     
@@ -18,7 +19,7 @@ export async function PUT(
 
     // Check if quote exists
     const existingQuote = await db.quote.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         customer: true,
         serviceAddress: true
@@ -48,7 +49,7 @@ export async function PUT(
 
     // Update the quote
     const updatedQuote = await db.quote.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         customer: true,
