@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// CORS configuration
+// CORS configuration - temporarily permissive for workaround
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://www.samedayramps.com',
+  'Access-Control-Allow-Origin': '*', // Temporarily allow all origins
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
   'Access-Control-Allow-Credentials': 'true',
+  'Access-Control-Max-Age': '86400',
 };
 
 export function middleware(request: NextRequest) {
