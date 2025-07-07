@@ -3,6 +3,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ===== CSS CUSTOM PROPERTIES ===== */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -43,6 +44,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ===== LIGHT THEME VARIABLES ===== */
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -78,6 +80,7 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
+/* ===== DARK THEME VARIABLES ===== */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -112,52 +115,43 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* ===== BASE STYLES ===== */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  
   body {
     @apply bg-background text-foreground;
   }
 }
 
-/* Mobile-first optimizations */
+/* ===== MOBILE-FIRST UTILITIES ===== */
 @layer utilities {
-  /* Safe area handling for mobile devices */
-  .safe-area-padding-bottom {
+  /* Safe area insets for devices with notches */
+  .safe-area-inset {
+    padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   
-  .safe-area-padding-top {
+  .safe-area-top {
     padding-top: env(safe-area-inset-top);
   }
   
-  .pt-safe-area-inset-top {
-    padding-top: env(safe-area-inset-top);
-  }
-  
-  .pb-safe-area-inset-bottom {
+  .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
   
-  /* Touch-friendly interactions */
+  /* Touch optimization for mobile interfaces */
   .touch-target {
-    min-height: 44px;
+    min-height: 44px; /* iOS minimum touch target */
     min-width: 44px;
   }
   
-  /* Improved touch interactions */
-  .touch-manipulation {
-    touch-action: manipulation;
-  }
-  
-  /* Prevent text selection on touch interfaces */
-  .touch-none {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
+  .touch-optimize {
+    touch-action: manipulation; /* Prevents zoom on double-tap */
+    -webkit-tap-highlight-color: transparent; /* Removes tap highlight */
   }
 }

@@ -1,4 +1,3 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
@@ -7,9 +6,9 @@ import {
   RefreshCw, 
   Server, 
   Shield, 
-  Phone,
-  Mail
+  Phone
 } from "lucide-react";
+import { typography, spacing, icons, themes, animations, cx } from "@/lib/design-system";
 
 interface ErrorStateProps {
   type?: "network" | "server" | "auth" | "validation" | "general";
@@ -35,45 +34,35 @@ export function ErrorState({
           icon: Wifi,
           title: title || "Connection Problem",
           message: message || "Check your internet connection and try again.",
-          color: "text-orange-600 dark:text-orange-400",
-          bgColor: "bg-orange-50 dark:bg-orange-900/20",
-          borderColor: "border-orange-200 dark:border-orange-800"
+          variant: "warning" as const,
         };
       case "server":
         return {
           icon: Server,
           title: title || "Server Error",
           message: message || "Our servers are experiencing issues. Please try again in a few minutes.",
-          color: "text-red-600 dark:text-red-400",
-          bgColor: "bg-red-50 dark:bg-red-900/20",
-          borderColor: "border-red-200 dark:border-red-800"
+          variant: "error" as const,
         };
       case "auth":
         return {
           icon: Shield,
           title: title || "Authentication Required",
           message: message || "Your session has expired. Please log in again.",
-          color: "text-blue-600 dark:text-blue-400",
-          bgColor: "bg-blue-50 dark:bg-blue-900/20",
-          borderColor: "border-blue-200 dark:border-blue-800"
+          variant: "info" as const,
         };
       case "validation":
         return {
           icon: AlertTriangle,
           title: title || "Invalid Data",
           message: message || "Please check your input and try again.",
-          color: "text-yellow-600 dark:text-yellow-400",
-          bgColor: "bg-yellow-50 dark:bg-yellow-900/20",
-          borderColor: "border-yellow-200 dark:border-yellow-800"
+          variant: "warning" as const,
         };
       default:
         return {
           icon: AlertTriangle,
           title: title || "Something went wrong",
           message: message || "An unexpected error occurred. Please try again.",
-          color: "text-gray-600 dark:text-gray-400",
-          bgColor: "bg-gray-50 dark:bg-gray-900/20",
-          borderColor: "border-gray-200 dark:border-gray-800"
+          variant: "neutral" as const,
         };
     }
   };
@@ -82,103 +71,90 @@ export function ErrorState({
   const Icon = config.icon;
 
   return (
-    <div className={`p-4 lg:p-8 ${className}`}>
-      <Card className={`${config.borderColor} ${config.bgColor}`}>
-        <CardContent className="p-6 text-center">
+    <div className={cx(spacing.component.lg, className)}>
+      <Card className={cx(
+        themes.card.default,
+        "border-l-4",
+        config.variant === "error" ? "border-l-red-500" : 
+        config.variant === "warning" ? "border-l-yellow-500" :
+        config.variant === "info" ? "border-l-blue-500" : "border-l-gray-500"
+      )}>
+        <CardContent className={cx(spacing.component.md, "text-center")}>
           {/* Error Icon */}
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm">
-            <Icon className={`h-8 w-8 ${config.color}`} />
+          <div className={cx(
+            "mx-auto mb-4 flex items-center justify-center rounded-full bg-white dark:bg-gray-800 shadow-sm",
+            "h-16 w-16"
+          )}>
+            <Icon className={cx(
+              icons.xl,
+              config.variant === "error" ? "text-red-600" :
+              config.variant === "warning" ? "text-yellow-600" :
+              config.variant === "info" ? "text-blue-600" : "text-gray-600"
+            )} />
           </div>
 
           {/* Error Title */}
-          <h3 className={`mb-2 text-lg font-semibold ${config.color}`}>
+          <h3 className={cx(
+            typography.heading.h3,
+            "mb-2",
+            config.variant === "error" ? "text-red-700" :
+            config.variant === "warning" ? "text-yellow-700" :
+            config.variant === "info" ? "text-blue-700" : "text-gray-700"
+          )}>
             {config.title}
           </h3>
 
           {/* Error Message */}
-          <p className="mb-6 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+          <p className={cx(
+            typography.body.medium,
+            "mb-6 text-gray-600 dark:text-gray-400 max-w-md mx-auto"
+          )}>
             {config.message}
           </p>
 
           {/* Action Buttons */}
-          <div className="space-y-3">
+          <div className={cx("flex flex-col sm:flex-row", spacing.gap.sm, "justify-center")}>
             {onRetry && (
-              <Button 
+              <Button
                 onClick={onRetry}
-                className="w-full h-12 text-base"
-                size="lg"
+                className={cx(
+                  "flex items-center",
+                  spacing.gap.sm,
+                  animations.transition
+                )}
               >
-                <RefreshCw className="h-5 w-5 mr-2" />
+                <RefreshCw className={icons.sm} />
                 Try Again
               </Button>
             )}
-
-            {/* Contact Support - Show for server errors or general errors */}
-            {(type === "server" || type === "general") && (
-              <div className="flex gap-3">
-                <Button 
-                  variant="outline"
-                  onClick={onContactSupport}
-                  className="flex-1 h-12 text-base"
-                  size="lg"
-                >
-                  <Phone className="h-5 w-5 mr-2" />
-                  Call Support
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => window.location.href = "mailto:support@samedayramps.com"}
-                  className="flex-1 h-12 text-base"
-                  size="lg"
-                >
-                  <Mail className="h-5 w-5 mr-2" />
-                  Email Us
-                </Button>
-              </div>
-            )}
-
-            {/* Auth-specific action */}
-            {type === "auth" && (
-              <Button 
+            
+            {onContactSupport && (
+              <Button
                 variant="outline"
-                onClick={() => window.location.href = "/login"}
-                className="w-full h-12 text-base"
-                size="lg"
+                onClick={onContactSupport}
+                className={cx(
+                  "flex items-center",
+                  spacing.gap.sm,
+                  animations.transition
+                )}
               >
-                Log In Again
+                <Phone className={icons.sm} />
+                Contact Support
               </Button>
             )}
           </div>
+
+          {/* Help text */}
+          {onContactSupport && (
+            <p className={cx(
+              typography.body.small,
+              "mt-4 text-gray-500 dark:text-gray-400"
+            )}>
+              If this problem persists, please contact our support team for assistance.
+            </p>
+          )}
         </CardContent>
       </Card>
-
-      {/* Additional Help Text */}
-      {type === "network" && (
-        <Alert className="mt-4">
-          <Wifi className="h-4 w-4" />
-          <AlertTitle>Connection Tips</AlertTitle>
-          <AlertDescription>
-            <ul className="mt-2 space-y-1 text-sm">
-              <li>• Check your WiFi or cellular connection</li>
-              <li>• Try moving to an area with better signal</li>
-              <li>• Restart your device if the problem persists</li>
-            </ul>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {type === "server" && (
-        <Alert className="mt-4">
-          <Server className="h-4 w-4" />
-          <AlertTitle>What&apos;s Happening?</AlertTitle>
-          <AlertDescription>
-            <p className="text-sm">
-              Our team has been notified and is working to resolve this issue. 
-              Most problems are fixed within a few minutes.
-            </p>
-          </AlertDescription>
-        </Alert>
-      )}
     </div>
   );
 }
