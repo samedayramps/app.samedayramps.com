@@ -26,6 +26,10 @@ const nextConfig: NextConfig = {
 
   // Security headers
   async headers() {
+    // Get the current domain from environment or default
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const domain = new URL(appUrl).origin;
+    
     return [
       {
         source: "/(.*)",
@@ -49,6 +53,23 @@ const nextConfig: NextConfig = {
           {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=()",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google-analytics.com https://maps.googleapis.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: https: blob:",
+              `connect-src 'self' ${domain} https://app.samedayramps.com https://www.google-analytics.com https://maps.googleapis.com`,
+              "frame-src 'self' https://www.google.com",
+              "worker-src 'self' blob:",
+              "manifest-src 'self'",
+              "base-uri 'self'",
+              "form-action 'self'",
+              "frame-ancestors 'none'",
+            ].join("; "),
           },
         ],
       },

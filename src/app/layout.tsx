@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Same Day Ramps - Admin",
   description: "Admin application for managing wheelchair ramp rentals",
+  other: {
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.google-analytics.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob:; connect-src 'self' https://app.samedayramps.com https://www.google-analytics.com https://maps.googleapis.com; frame-src 'self' https://www.google.com; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+  }
 };
 
 export const viewport = {
