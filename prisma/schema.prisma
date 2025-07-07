@@ -69,11 +69,11 @@ model Quote {
   serviceAddressId String
   
   // Quote details
-  rampHeight     Float
+  rampHeight     Float?
   timelineNeeded TimelineType
   serviceType    ServiceType
-  monthlyRate    Float
-  installationFee Float
+  monthlyRate    Float?
+  installationFee Float?
   estimatedDuration String?
   
   // Status and lifecycle
@@ -230,6 +230,7 @@ enum ServiceType {
 }
 
 enum QuoteStatus {
+  NEEDS_ASSESSMENT
   PENDING
   SENT
   ACCEPTED

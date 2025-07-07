@@ -39,9 +39,9 @@ interface Rental {
 
 interface Quote {
   id: string;
-  status: 'PENDING' | 'SENT' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED';
-  monthlyRate: number;
-  installationFee: number;
+  status: 'NEEDS_ASSESSMENT' | 'PENDING' | 'SENT' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED';
+  monthlyRate: number | null;
+  installationFee: number | null;
   serviceAddress: Address;
   createdAt: string;
   agreement?: {
@@ -285,11 +285,15 @@ export function CustomerDetail({ customer }: CustomerDetailProps) {
                   <div className={cx("grid grid-cols-2 gap-4", typography.body.small)}>
                     <div>
                       <p className="text-gray-600">Monthly Rate</p>
-                      <p className={cx(typography.body.medium, "font-medium")}>{formatCurrency(quote.monthlyRate)}</p>
+                      <p className={cx(typography.body.medium, "font-medium")}>
+                        {quote.monthlyRate ? formatCurrency(quote.monthlyRate) : 'Assessment needed'}
+                      </p>
                     </div>
                     <div>
                       <p className="text-gray-600">Installation Fee</p>
-                      <p className={cx(typography.body.medium, "font-medium")}>{formatCurrency(quote.installationFee)}</p>
+                      <p className={cx(typography.body.medium, "font-medium")}>
+                        {quote.installationFee ? formatCurrency(quote.installationFee) : 'Assessment needed'}
+                      </p>
                     </div>
                   </div>
                   <Button 

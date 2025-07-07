@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { configUtils } from '@/lib/config';
-import { TimelineType, ServiceType } from '@prisma/client';
+import { TimelineType, ServiceType, QuoteStatus } from '@prisma/client';
+import { sendQuoteEmail } from '@/lib/email-service';
 
 // CORS configuration
 const corsHeaders = {
@@ -33,22 +34,21 @@ export async function POST(request: NextRequest) {
       rampHeight,
       timeline,
       notes,
-      source = 'website',
-      priority = 'normal'
+      source = 'website'
     } = data;
 
     // Validate required fields
-    if (!customerName || !customerEmail || !customerPhone || !serviceAddress) {
+    if (!customerName || !customerEmail || !customerPhone || !serviceAddress || !timeline) {
       return NextResponse.json(
-        { error: 'Missing required fields: customerName, customerEmail, customerPhone, serviceAddress' },
+        { error: 'Missing required fields: customerName, customerEmail, customerPhone, serviceAddress, timeline' },
         { status: 400, headers: corsHeaders }
       );
     }
 
-    // Start a transaction to create customer, address, and quote
-    const result = await db.$transaction(async (prisma) => {
-      // 1. Create or find customer
-      let customer = await prisma.customer.findFirst({
+    // Start database transaction
+    const result = await db.$transaction(async (tx) => {
+      // 1. Check if customer exists, if not create new one
+      let customer = await tx.customer.findFirst({
         where: {
           OR: [
             { email: customerEmail },
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
       });
 
       if (!customer) {
-        customer = await prisma.customer.create({
+        customer = await tx.customer.create({
           data: {
             name: customerName,
             email: customerEmail,
@@ -70,28 +70,45 @@ export async function POST(request: NextRequest) {
         console.log('👤 Found existing customer:', customer.id);
       }
 
-      // 2. Create service address
-      const serviceAddressRecord = await prisma.address.create({
+      // 2. Parse and create service address
+      const addressParts = serviceAddress.split(',').map((part: string) => part.trim());
+      const street = addressParts[0] || serviceAddress;
+      const city = addressParts[1] || 'Unknown';
+      const stateZip = addressParts[2] || 'Unknown';
+      const [state, zipCode] = stateZip.split(' ');
+
+      const address = await tx.address.create({
         data: {
-          street: serviceAddress,
-          city: 'Dallas', // Default to Dallas, will be updated during consultation
-          state: 'TX',
-          zipCode: '75000', // Default, will be updated during consultation
-          country: 'US',
+          street,
+          city,
+          state: state || 'Unknown',
+          zipCode: zipCode || 'Unknown',
           customerId: customer.id,
         }
       });
-      console.log('📍 Created service address:', serviceAddressRecord.id);
+      console.log('📍 Created service address:', address.id);
 
-      // 3. Calculate pricing if ramp height is provided
-      let monthlyRate = 125; // Default base rate
-      let installationFee = 75; // Default installation fee
+      // 3. Determine if we have enough info to calculate pricing
+      const hasRampHeight = rampHeight && parseFloat(rampHeight) > 0;
+      let pricing = null;
+      let quoteStatus: QuoteStatus = 'NEEDS_ASSESSMENT' as QuoteStatus;
+      let emailSent = false;
 
-      if (rampHeight && parseInt(rampHeight) > 0) {
-        const heightInches = parseInt(rampHeight);
-        const pricing = await configUtils.calculatePricing(heightInches);
-        monthlyRate = pricing.monthlyRate;
-        installationFee = pricing.installationFee;
+      if (hasRampHeight) {
+        // Calculate pricing since we have ramp height
+        const height = parseFloat(rampHeight);
+        const pricingResult = await configUtils.calculatePricing(height);
+        
+        pricing = {
+          monthlyRate: pricingResult.monthlyRate,
+          installationFee: pricingResult.installationFee,
+        };
+        
+        // Set status to PENDING since we can send the quote
+        quoteStatus = 'PENDING' as QuoteStatus;
+        console.log('💰 Calculated pricing:', pricing);
+      } else {
+        console.log('📏 No ramp height provided - needs assessment');
       }
 
       // 4. Map timeline to enum value
@@ -105,65 +122,103 @@ export async function POST(request: NextRequest) {
       const timelineNeeded = timelineMapping[timeline] || TimelineType.FLEXIBLE;
 
       // 5. Determine service type based on timeline and notes
-      let serviceType: ServiceType = ServiceType.AGING_IN_PLACE; // Default
+      let serviceType: ServiceType = 'AGING_IN_PLACE' as ServiceType; // Default
       if (timeline === 'asap' || notes?.toLowerCase().includes('hospital') || notes?.toLowerCase().includes('surgery')) {
-        serviceType = ServiceType.POST_SURGERY;
+        serviceType = 'POST_SURGERY' as ServiceType;
       } else if (notes?.toLowerCase().includes('hospice') || notes?.toLowerCase().includes('transitional')) {
-        serviceType = ServiceType.TRANSITIONAL_HOSPICE;
+        serviceType = 'TRANSITIONAL_HOSPICE' as ServiceType;
       }
 
-      // 6. Create quote
-      const quote = await prisma.quote.create({
+      // 6. Create the quote
+      const quote = await tx.quote.create({
         data: {
           customerId: customer.id,
-          serviceAddressId: serviceAddressRecord.id,
-          rampHeight: rampHeight ? parseFloat(rampHeight) : 24, // Default to 24 inches
+          serviceAddressId: address.id,
+          rampHeight: hasRampHeight ? parseFloat(rampHeight) : null,
           timelineNeeded,
           serviceType,
-          monthlyRate,
-          installationFee,
-          estimatedDuration: rampHeight && parseInt(rampHeight) > 24 ? '2-3 hours' : '1-2 hours',
-          notes: notes || `Quote request from ${source}. Timeline: ${timeline}. Priority: ${priority}`,
-          status: 'PENDING',
-          // Set expiration to 30 days from now
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        },
+          monthlyRate: pricing?.monthlyRate ?? null,
+          installationFee: pricing?.installationFee ?? null,
+          estimatedDuration: hasRampHeight ? '1-3 hours' : null,
+          status: quoteStatus,
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+          notes: `${notes || ''}\n\nSource: ${source}${hasRampHeight ? '' : '\n⚠️ Needs assessment - no ramp height provided'}`.trim(),
+        }
+      });
+
+      // 7. Get the complete quote with relationships
+      const fullQuote = await tx.quote.findUnique({
+        where: { id: quote.id },
         include: {
           customer: true,
-          serviceAddress: true
+          serviceAddress: true,
         }
       });
 
       console.log('📋 Created quote:', quote.id);
 
-      return {
-        success: true,
-        data: {
-          quoteId: quote.id,
-          customerId: customer.id,
-          customerName: customer.name,
-          customerEmail: customer.email,
-          monthlyRate,
-          installationFee,
-          totalFirstMonth: monthlyRate + installationFee,
-          timeline: timelineNeeded,
-          serviceType,
-          estimatedDuration: quote.estimatedDuration,
-        },
-        message: 'Quote request created successfully. We will contact you within 2 hours.',
-      };
+      // 8. Send email if we have complete pricing
+      if (hasRampHeight && pricing && fullQuote) {
+        try {
+          await sendQuoteEmail(fullQuote);
+          emailSent = true;
+          
+          // Update quote status to SENT
+          await tx.quote.update({
+            where: { id: quote.id },
+            data: {
+              status: QuoteStatus.SENT,
+              sentAt: new Date(),
+            }
+          });
+          
+          console.log('📧 Quote email sent successfully');
+        } catch (emailError) {
+          console.error('📧 Failed to send quote email:', emailError);
+          // Don't fail the entire request if email fails
+        }
+      }
+
+      return { quote: fullQuote, emailSent, hasRampHeight };
     });
 
-    return NextResponse.json(result, { 
-      status: 201, 
+    // Prepare response based on whether we sent email or not
+    const responseData = {
+      success: true,
+      quote: {
+        id: result.quote?.id,
+        status: result.quote?.status,
+        customer: {
+          name: result.quote?.customer.name,
+          email: result.quote?.customer.email,
+        },
+        pricing: result.hasRampHeight ? {
+          monthlyRate: result.quote?.monthlyRate,
+          installationFee: result.quote?.installationFee,
+          total: (result.quote?.monthlyRate || 0) + (result.quote?.installationFee || 0),
+        } : null,
+        emailSent: result.emailSent,
+        needsAssessment: !result.hasRampHeight,
+      },
+      message: result.hasRampHeight 
+        ? result.emailSent 
+          ? 'Quote created and sent to customer via email'
+          : 'Quote created with pricing - email sending failed'
+        : 'Quote request received - assessment needed to provide pricing',
+    };
+
+    const statusCode = result.hasRampHeight ? 201 : 202; // 202 = Accepted but needs further processing
+
+    return NextResponse.json(responseData, { 
+      status: statusCode, 
       headers: corsHeaders 
     });
 
   } catch (error) {
-    console.error('❌ Error creating quote request:', error);
+    console.error('❌ Error processing quote request:', error);
     return NextResponse.json(
       { 
-        error: 'Failed to create quote request',
+        error: 'Failed to process quote request',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { 

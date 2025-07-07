@@ -15,11 +15,11 @@ interface Quote {
   id: string;
   customerId: string;
   serviceAddressId: string;
-  rampHeight: number;
+  rampHeight: number | null;
   timelineNeeded: 'ASAP' | 'WITHIN_3_DAYS' | 'WITHIN_1_WEEK' | 'FLEXIBLE';
-  monthlyRate: number;
-  installationFee: number;
-  status: 'PENDING' | 'SENT' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED';
+  monthlyRate: number | null;
+  installationFee: number | null;
+  status: 'NEEDS_ASSESSMENT' | 'PENDING' | 'SENT' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED';
   notes?: string;
   createdAt: string;
   customer: {
@@ -136,6 +136,7 @@ export function QuoteList({ quotes }: QuoteListProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="NEEDS_ASSESSMENT">Needs Assessment</SelectItem>
                   <SelectItem value="PENDING">Pending</SelectItem>
                   <SelectItem value="SENT">Sent</SelectItem>
                   <SelectItem value="ACCEPTED">Accepted</SelectItem>
@@ -201,13 +202,20 @@ export function QuoteList({ quotes }: QuoteListProps) {
                     </div>
                     <div className={cx("flex items-center ml-2 font-medium text-green-600", spacing.gap.xs)}>
                       <DollarSign className={icons.sm} />
-                      <span>{formatCurrency(quote.monthlyRate + quote.installationFee)}</span>
+                      <span>
+                        {quote.monthlyRate && quote.installationFee 
+                          ? formatCurrency(quote.monthlyRate + quote.installationFee)
+                          : 'Assessment needed'
+                        }
+                      </span>
                     </div>
                   </div>
 
                   {/* Quote Details */}
                   <div className={cx("flex items-center justify-between", typography.body.medium, "text-gray-600")}>
-                    <span>{quote.rampHeight}&quot; ramp • {quote.timelineNeeded.replace('_', ' ').toLowerCase()}</span>
+                    <span>
+                      {quote.rampHeight ? `${quote.rampHeight}" ramp` : 'Height TBD'} • {quote.timelineNeeded.replace('_', ' ').toLowerCase()}
+                    </span>
                     <span>{formatDate(quote.createdAt)}</span>
                   </div>
 
@@ -228,6 +236,15 @@ export function QuoteList({ quotes }: QuoteListProps) {
                     >
                       View
                     </Button>
+                    {quote.status === 'NEEDS_ASSESSMENT' && (
+                      <Button 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleViewQuote(quote.id)}
+                      >
+                        Complete Assessment
+                      </Button>
+                    )}
                     {quote.status === 'PENDING' && (
                       <Button 
                         size="sm" 
